@@ -19,5 +19,5 @@ The open nature of the block chain and public consensus ensure a free, unobstruc
 
 ## To Run?
 optional: 
-nub@nubBox$:~> cd [/your/project/dir] && npm install -g crypto-js
-nub@nubBox$:~> npm main.js
+nub@nubBox$:> cd [/your/project/dir] && npm install -g crypto-js
+nub@nubBox$:> npm main.js
