@@ -1,4 +1,5 @@
-# projectOSSM
+# Project OSSM
+### Open Source Simple Messaging
 
 Open Source Simple Messaging is a platform that aims to remove the regulation and censorship surrounding public discussion.
 
@@ -14,3 +15,9 @@ We aim to give that control back, to enable anyone to share any discourse or ope
 No email, no password, no IP logs, no personally identifiable information whatsoever is required to use the service.
 
 The open nature of the block chain and public consensus ensure a free, unobstructed and uncorrupted platform which belongs to nobody.
+
+
+## To Run?
+optional: 
+nub@nubBox$:~> cd [/your/project/dir] && npm install -g crypto-js
+nub@nubBox$:~> npm main.js
