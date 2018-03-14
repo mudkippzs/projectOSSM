@@ -27,11 +27,27 @@ class Block{
 	
 }
 
+class messageBlock extends Block{
+	constructor(index, timestamp, data, previousHash = '') {
+		super(index, timestamp, data, previousHash = '');
+		
+	}
+	
+}
+
+class voteBlock extends Block{
+	constructor(index, timestamp, data, previousHash = '') {
+		super(index, timestamp, data, previousHash = '');
+		
+	}
+	
+}
+
 class Blockchain{
 	
 	constructor(){
 		this.chain = [this.createGenesisBlock()];
-		this.difficulty = 40
+		this.difficulty = 1
 				
 	}
 
@@ -51,6 +67,26 @@ class Blockchain{
 		
 	}
 	
+	printMessageForURL(url){
+		var chain = this
+		this.chain.forEach(function(block){					
+			if(block.data.url_hash == url){
+				var polarity = chain.get_polarity(block.index);
+				console.log(block.data.user + ": " + block.data.message + "\n" + "Polarity: " + polarity);
+			}
+		});
+	}
+	
+	get_polarity(block_index){
+		var polarity = 0;
+		this.chain.forEach(function(block){
+			if(block.data.block_id == block_index){
+				polarity = polarity + block.data.polarity;
+			}
+		});
+		return polarity;
+	}	
+	
 	isChainValid(){
 		for(let i = 1; i < this.chain.length; i++){
 			const currentBlock = this.chain[i];
@@ -67,13 +103,26 @@ class Blockchain{
 	}
 }
 
+ossmCoin = new Blockchain();
 
-let ossmCoin = new Blockchain();
-ossmCoin.addBlock(new Block(1,"01/01/2018",{url_hash:'', user: "user123AAC", message: "And its like that, and thats the way it is - HUWAH!", timestamp: "13:37", votes: 0}));
-ossmCoin.addBlock(new Block(2,"01/01/2018",{url_hash:'', user: "user456ABB", message: "To infinity and eat pies!", timestamp: "22:16", votes: 0}));
-ossmCoin.addBlock(new Block(4,"01/01/2018",{url_hash:'', momauser: "user654BAA", message: "If up is down and down is up, which way is that?", timestamp: "16:20", votes: 0}));
-ossmCoin.addBlock(new Block(3,"01/01/2018",{url_hash:'', user: "user123AAB", message: "He who has the last laugh, laughs last!", timestamp: "03:16", votes: 0}));
+//two comment blocks
+ossmCoin.addBlock(new messageBlock(1,"01/01/2018",{url_hash:'123', user: "user123AAC", message: "And its like that, and thats the way it is - HUWAH!", timestamp: "13:37", polarity : 0}));
+ossmCoin.addBlock(new messageBlock(2,"01/01/2018",{url_hash:'123', user: "user456ABB", message: "To infinity and eat pies!", timestamp: "22:16", polarity : 0}));
+//positive vote
+ossmCoin.addBlock(new voteBlock(3,"01/01/2018",{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
+ossmCoin.addBlock(new voteBlock(4,"02/01/2018",{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
+ossmCoin.addBlock(new voteBlock(5,"03/01/2018",{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
+ossmCoin.addBlock(new voteBlock(6,"04/01/2018",{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
+ossmCoin.addBlock(new voteBlock(7,"05/01/2018",{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
+//negative vote
+ossmCoin.addBlock(new voteBlock(8,"06/01/2018",{block_id: 2, user: "user123AAC", message: "Damn it you're wrong!", timestamp: "03:16", polarity: -1}));
+ossmCoin.addBlock(new voteBlock(9,"07/01/2018",{block_id: 2, user: "user123AAC", message: "Damn it you're wrong!", timestamp: "03:16", polarity: -1}));
+ossmCoin.addBlock(new voteBlock(10,"08/01/2018",{block_id: 2, user: "user123AAC", message: "Damn it you're wrong!", timestamp: "03:16", polarity: -1}));
+//reply without vote
+ossmCoin.addBlock(new voteBlock(11,"01/01/2018",{block_id: 2, user: "user123AAC", message: "I am on the fence about this!", timestamp: "03:16", polarity : 0}));
+
+ossmCoin.printMessageForURL('123');
+//console.log(JSON.stringify(ossmCoin, null, 4));
 
 
-console.log(JSON.stringify(ossmCoin, null, 4));
 
