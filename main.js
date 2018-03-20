@@ -28,10 +28,11 @@ Describes the basic functions and attributes of a block
 ***/
 class Block{
 	
-	constructor(index, timestamp, data, previousHash = ''){
-		this.index = index;
+	constructor(timestamp, transactions, data, previousHash = ''){
+		this.index = this.generate_index; // index is required for voteing as a relational index
 		this.timestamp = timestamp;
 		this.data = data;
+		this.transactions = transactions;
 		this.previousHash = previousHash;
 		this.hash = this.calc_hash();
 		this.nonce = 0;
@@ -51,14 +52,20 @@ class Block{
 		}	
 		console.log("Block mined: " + this.hash);
 	}
+	
+	generate_index() {
+	  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+		(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+	  )
+	}
 
 	
 }
 
 // A subclass of a Block for posting messages to the network
 class messageBlock extends Block{
-	constructor(index, timestamp, data, previousHash = '') {
-		super(index, timestamp, data, previousHash = '');
+	constructor(timestamp, data, previousHash = '') {
+		super(timestamp, data, previousHash = '');
 		
 	}
 	
@@ -66,9 +73,19 @@ class messageBlock extends Block{
 
 // A subclass of a Block for posting votes to the network
 class voteBlock extends Block{
-	constructor(index, timestamp, data, previousHash = '') {
-		super(index, timestamp, data, previousHash = '');
+	constructor(timestamp, data, previousHash = '') {
+		super(timestamp, data, previousHash = '');
 		
+	}
+	
+}
+
+class Transaction{
+	
+	constructor(fromAddress, toAddress, amount){
+		this.fromAddress = fromAddress;
+		this.toAddress = toAddress;
+		this.amount = amount;
 	}
 	
 }
@@ -82,15 +99,16 @@ class Blockchain{
 	**/
 	constructor(){
 		this.chain = [this.createGenesisBlock()];
-		this.difficulty = 1 // Adjust to increase time to get a block @todo: write something to make this grow!
-				
+		this.difficulty = 3; // Adjust to increase time to get a block @todo: write something to make this grow!
+		this.pendingTransactions = [];
+		this.miningReward = 100;
 	}
 	/***
 	function createGenesisBlock
 	@return : the first block in the chain is created
 	**/
 	createGenesisBlock(){
-		return new Block(0,"01/01/2018","Make it so", "0"); // "'With great power comes great responsability' - Uncle Ben" - Michael Scott
+		return new Block("01/01/2018",[],"Make it so", "0"); // "'With great power comes great responsability' - Uncle Ben" - Michael Scott
 	}
 	
 	/***
@@ -104,13 +122,51 @@ class Blockchain{
 	/***
 	function addBlock
 	@param newBlock : block to add to chain
-	**/
+	
 	addBlock(newBlock){
 		newBlock.previousHash = this.getLatestBlock().hash;
 		newBlock.mineBlock(this.difficulty);
 		newBlock.hash = newBlock.calc_hash();
 		this.chain.push(newBlock);
 		
+	}
+	**/
+	
+    minePendingTransactions(miningRewardAddress){
+        let block = new Block(Date.now(), this.pendingTransactions,'nothing', this.getLatestBlock().hash);
+        block.mineBlock(this.difficulty);
+
+        console.log('Block successfully mined!');
+        this.chain.push(block);
+
+        this.pendingTransactions = [
+            new Transaction(null, miningRewardAddress, this.miningReward)
+        ];
+    }
+	
+	createTransaction(transaction){
+		this.pendingTransactions.push(transaction);		
+	}
+	
+	getBalanceOfAddress(address){
+		let balance = 0;
+
+		for(const block of this.chain){
+			
+			for(const trans of block.transactions){								
+				if(trans.fromAddress === address){
+					console.log('From: ' + trans.fromAddress);
+					balance -= trans.amount;
+				}
+
+				if(trans.toAddress === address){
+					console.log('To: ' + trans.toAddress);
+					balance += trans.amount;
+				}
+			}
+		}
+
+		return balance;
 	}
 	
 	/***
@@ -166,8 +222,21 @@ class Blockchain{
 	}
 }
 
-ossmCoin = new Blockchain();
+let ossmCoin = new Blockchain();
 
+ossmCoin.createTransaction(new Transaction('address1', 'address2', 100));
+ossmCoin.createTransaction(new Transaction('address2', 'address1', 50));
+
+console.log('\n Starting the miner...');
+ossmCoin.minePendingTransactions('xaviers-address');
+
+console.log('\nBalance of xavier is', ossmCoin.getBalanceOfAddress('xaviers-address'));
+
+console.log('\n Starting the miner again...');
+ossmCoin.minePendingTransactions('xaviers-address');
+
+console.log('\nBalance of xavier is', ossmCoin.getBalanceOfAddress('xaviers-address'));
+/* 
 //two comment blocks
 ossmCoin.addBlock(new messageBlock(1,"01/01/2018",{url_hash:'123', user: "user123AAC", message: "And its like that, and thats the way it is - HUWAH!", timestamp: "13:37", polarity : 0}));
 ossmCoin.addBlock(new messageBlock(2,"01/01/2018",{url_hash:'123', user: "user456ABB", message: "To infinity and eat pies!", timestamp: "22:16", polarity : 0}));
@@ -188,6 +257,6 @@ ossmCoin.addBlock(new voteBlock(11,"01/01/2018",{block_id: 2, user: "user123AAC"
 
 ossmCoin.printMessageForURL('123');
 //console.log(JSON.stringify(ossmCoin, null, 4));
-
+ */
 
 
