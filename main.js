@@ -28,8 +28,12 @@ Describes the basic functions and attributes of a block
 ***/
 class Block{
 	
-	constructor(timestamp, transactions, data, previousHash = ''){
-		this.index = this.generate_index; // index is required for voteing as a relational index
+	constructor(index, timestamp, transactions, data, previousHash = ''){
+		if(index != null){
+			this.index = index;
+		}else{
+			this.index = this.generate_index; // index is required for voteing as a relational index
+		}
 		this.timestamp = timestamp;
 		this.data = data;
 		this.transactions = transactions;
@@ -58,14 +62,16 @@ class Block{
 		(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
 	  )
 	}
-
 	
+	get_index(){
+		return this.index;
+	}	
 }
 
 // A subclass of a Block for posting messages to the network
 class messageBlock extends Block{
-	constructor(timestamp, data, previousHash = '') {
-		super(timestamp, data, previousHash = '');
+	constructor(index,timestamp, data, previousHash = '') {
+		super(index,timestamp, data, previousHash = '');
 		
 	}
 	
@@ -73,8 +79,8 @@ class messageBlock extends Block{
 
 // A subclass of a Block for posting votes to the network
 class voteBlock extends Block{
-	constructor(timestamp, data, previousHash = '') {
-		super(timestamp, data, previousHash = '');
+	constructor(index,timestamp, data, previousHash = '') {
+		super(index,timestamp, data, previousHash = '');
 		
 	}
 	
@@ -101,7 +107,7 @@ class Blockchain{
 		this.chain = [this.createGenesisBlock()];
 		this.difficulty = 3; // Adjust to increase time to get a block @todo: write something to make this grow!
 		this.pendingTransactions = [];
-		this.miningReward = 100;
+		this.miningReward = 50;
 	}
 	/***
 	function createGenesisBlock
@@ -122,6 +128,7 @@ class Blockchain{
 	/***
 	function addBlock
 	@param newBlock : block to add to chain
+	**/
 	
 	addBlock(newBlock){
 		newBlock.previousHash = this.getLatestBlock().hash;
@@ -130,7 +137,7 @@ class Blockchain{
 		this.chain.push(newBlock);
 		
 	}
-	**/
+	
 	
     minePendingTransactions(miningRewardAddress){
         let block = new Block(Date.now(), this.pendingTransactions,'nothing', this.getLatestBlock().hash);
@@ -154,13 +161,11 @@ class Blockchain{
 		for(const block of this.chain){
 			
 			for(const trans of block.transactions){								
-				if(trans.fromAddress === address){
-					console.log('From: ' + trans.fromAddress);
+				if(trans.fromAddress === address){					
 					balance -= trans.amount;
 				}
 
-				if(trans.toAddress === address){
-					console.log('To: ' + trans.toAddress);
+				if(trans.toAddress === address){					
 					balance += trans.amount;
 				}
 			}
@@ -176,6 +181,7 @@ class Blockchain{
 	**/
 	printMessageForURL(url){
 		var chain = this
+		console.log('\nMessages:');
 		this.chain.forEach(function(block){					
 			if(block.data.url_hash == url){
 				var polarity = chain.get_polarity(block.index);
@@ -224,39 +230,47 @@ class Blockchain{
 
 let ossmCoin = new Blockchain();
 
+
 ossmCoin.createTransaction(new Transaction('address1', 'address2', 100));
 ossmCoin.createTransaction(new Transaction('address2', 'address1', 50));
 
 console.log('\n Starting the miner...');
-ossmCoin.minePendingTransactions('xaviers-address');
+ossmCoin.minePendingTransactions('alex-address');
+console.log('\nBalance of xavier is', ossmCoin.getBalanceOfAddress('alex-address'));
 
-console.log('\nBalance of xavier is', ossmCoin.getBalanceOfAddress('xaviers-address'));
+console.log('\n Starting the miner...');
+ossmCoin.minePendingTransactions('alex-address');
+console.log('\nBalance of xavier is', ossmCoin.getBalanceOfAddress('alex-address'));
 
-console.log('\n Starting the miner again...');
-ossmCoin.minePendingTransactions('xaviers-address');
+console.log('\n Starting the miner...');
+ossmCoin.minePendingTransactions('alex-address');
+console.log('\nBalance of xavier is', ossmCoin.getBalanceOfAddress('alex-address'));
 
-console.log('\nBalance of xavier is', ossmCoin.getBalanceOfAddress('xaviers-address'));
-/* 
+console.log('\n Starting the miner...');
+ossmCoin.minePendingTransactions('alex-address');
+console.log('\nBalance of xavier is', ossmCoin.getBalanceOfAddress('alex-address'));
+
+
+
 //two comment blocks
-ossmCoin.addBlock(new messageBlock(1,"01/01/2018",{url_hash:'123', user: "user123AAC", message: "And its like that, and thats the way it is - HUWAH!", timestamp: "13:37", polarity : 0}));
-ossmCoin.addBlock(new messageBlock(2,"01/01/2018",{url_hash:'123', user: "user456ABB", message: "To infinity and eat pies!", timestamp: "22:16", polarity : 0}));
+ossmCoin.addBlock(new messageBlock(1,"01/01/2018",[],{url_hash:'123', user: "user123AAC", message: "And its like that, and thats the way it is - HUWAH!", timestamp: "13:37", polarity : 0}));
+ossmCoin.addBlock(new messageBlock(2,"01/01/2018",[],{url_hash:'123', user: "user456ABB", message: "To infinity and eat pies!", timestamp: "22:16", polarity : 0}));
 //positive vote
-ossmCoin.addBlock(new voteBlock(3,"01/01/2018",{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
+ossmCoin.addBlock(new voteBlock("01/01/2018",[],{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
 ossmCoin.isChainValid();
-ossmCoin.addBlock(new voteBlock(4,"02/01/2018",{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
-ossmCoin.addBlock(new voteBlock(5,"03/01/2018",{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
-ossmCoin.addBlock(new voteBlock(6,"04/01/2018",{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
-ossmCoin.addBlock(new voteBlock(7,"05/01/2018",{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
+ossmCoin.addBlock(new voteBlock("02/01/2018",[],{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
+ossmCoin.addBlock(new voteBlock("03/01/2018",[],{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
+ossmCoin.addBlock(new voteBlock("04/01/2018",[],{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
+ossmCoin.addBlock(new voteBlock("05/01/2018",[],{block_id: 1, user: "user123AAC", message: "I agree with you!", timestamp: "16:20", polarity: 1}));
 //negative vote
-ossmCoin.addBlock(new voteBlock(8,"06/01/2018",{block_id: 2, user: "user123AAC", message: "Damn it you're wrong!", timestamp: "03:16", polarity: -1}));
-ossmCoin.addBlock(new voteBlock(9,"07/01/2018",{block_id: 2, user: "user123AAC", message: "Damn it you're wrong!", timestamp: "03:16", polarity: -1}));
-ossmCoin.addBlock(new voteBlock(10,"08/01/2018",{block_id: 2, user: "user123AAC", message: "Damn it you're wrong!", timestamp: "03:16", polarity: -1}));
+ossmCoin.addBlock(new voteBlock("06/01/2018",[],{block_id: 2, user: "user123AAC", message: "Damn it you're wrong!", timestamp: "03:16", polarity: -1}));
+ossmCoin.addBlock(new voteBlock("07/01/2018",[],{block_id: 2, user: "user123AAC", message: "Damn it you're wrong!", timestamp: "03:16", polarity: -1}));
+ossmCoin.addBlock(new voteBlock("08/01/2018",[],{block_id: 2, user: "user123AAC", message: "Damn it you're wrong!", timestamp: "03:16", polarity: -1}));
 //reply without vote
 ossmCoin.isChainValid();
-ossmCoin.addBlock(new voteBlock(11,"01/01/2018",{block_id: 2, user: "user123AAC", message: "I am on the fence about this!", timestamp: "03:16", polarity : 0}));
+ossmCoin.addBlock(new voteBlock("01/01/2018",[],{block_id: 2, user: "user123AAC", message: "I am on the fence about this!", timestamp: "03:16", polarity : 0}));
+
 
 ossmCoin.printMessageForURL('123');
 //console.log(JSON.stringify(ossmCoin, null, 4));
- */
-
 
